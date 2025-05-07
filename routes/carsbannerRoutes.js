@@ -1,3 +1,4 @@
+// routes/carBannerRoutes.js
 const express = require("express");
 const multer = require("multer");
 const path = require("path");
@@ -6,22 +7,22 @@ const CarBanner = require("../models/CarBanner");
 
 const router = express.Router();
 
+// 🟢 Multer Storage Configuration
 const storage = multer.diskStorage({
   destination: "./uploads/",
   filename: (req, file, cb) => {
     cb(null, `${Date.now()}-${file.originalname}`);
   },
 });
-
 const upload = multer({ storage });
 
-// 🟢 Upload multiple images and store in a single array
+// 🟢 Upload Multiple Images
 router.post("/", upload.array("images", 5), async (req, res) => {
   if (!req.files || req.files.length === 0) {
     return res.status(400).json({ error: "No files uploaded" });
   }
 
-  const imageUrls = req.files.map(file => `https://car-rental-backend-zy09.onrender.com/uploads/${file.filename}`);
+  const imageUrls = req.files.map(file => `${req.protocol}://${req.get("host")}/uploads/${file.filename}`);
 
   try {
     let carBanner = await CarBanner.findOne();
@@ -32,24 +33,23 @@ router.post("/", upload.array("images", 5), async (req, res) => {
       carBanner = new CarBanner({ images: imageUrls });
       await carBanner.save();
     }
-
-    res.json(carBanner);
+    res.status(200).json(carBanner);
   } catch (error) {
     res.status(500).json({ error: "Database error", details: error.message });
   }
 });
 
-// 🟢 Fetch banners (single document with images array)
+// 🟢 Fetch All Banners
 router.get("/", async (req, res) => {
   try {
     const carBanner = await CarBanner.findOne();
-    res.json(carBanner ? carBanner.images : []);
+    res.status(200).json(carBanner ? carBanner.images : []);
   } catch (error) {
     res.status(500).json({ error: "Database error", details: error.message });
   }
 });
 
-// 🟢 Delete a single image from the array
+// 🟢 Delete a Single Image
 router.delete("/:imageUrl", async (req, res) => {
   try {
     let carBanner = await CarBanner.findOne();
@@ -57,20 +57,17 @@ router.delete("/:imageUrl", async (req, res) => {
       return res.status(404).json({ error: "No banners found" });
     }
 
-    const imageToDelete = `https://car-rental-backend-zy09.onrender.com/uploads/${req.params.imageUrl}`;
+    const imageToDelete = `${req.protocol}://${req.get("host")}/uploads/${req.params.imageUrl}`;
     carBanner.images = carBanner.images.filter(img => img !== imageToDelete);
-
     await carBanner.save();
 
-    // Delete file from server
-    const filename = path.basename(imageToDelete);
-    const filePath = path.join(__dirname, "../uploads", filename);
-
+    // Delete image file from server
+    const filePath = path.join(__dirname, "../uploads", req.params.imageUrl);
     fs.unlink(filePath, (err) => {
       if (err) console.error("Error deleting file:", err);
     });
 
-    res.json({ message: "Image deleted successfully" });
+    res.status(200).json({ message: "Image deleted successfully" });
   } catch (error) {
     res.status(500).json({ error: "Database error", details: error.message });
   }
