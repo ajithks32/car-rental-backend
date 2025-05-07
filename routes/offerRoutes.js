@@ -80,7 +80,7 @@ router.get("/", async (req, res) => {
     
     const updatedOffers = offers.map((offer) => ({
       _id: offer._id,
-      images: offer.images.map((img) => `http://localhost:5000/uploads/${img}`),
+      images: offer.images.map((img) => `https://car-rental-backend-zy09.onrender.com/uploads/${img}`),
     }));
 
     res.json(updatedOffers);
