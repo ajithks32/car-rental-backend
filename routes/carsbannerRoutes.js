@@ -21,7 +21,7 @@ router.post("/", upload.array("images", 5), async (req, res) => {
     return res.status(400).json({ error: "No files uploaded" });
   }
 
-  const imageUrls = req.files.map(file => `http://localhost:5000/uploads/${file.filename}`);
+  const imageUrls = req.files.map(file => `https://car-rental-backend-zy09.onrender.com/uploads/${file.filename}`);
 
   try {
     let carBanner = await CarBanner.findOne();
@@ -57,7 +57,7 @@ router.delete("/:imageUrl", async (req, res) => {
       return res.status(404).json({ error: "No banners found" });
     }
 
-    const imageToDelete = `http://localhost:5000/uploads/${req.params.imageUrl}`;
+    const imageToDelete = `https://car-rental-backend-zy09.onrender.com/uploads/${req.params.imageUrl}`;
     carBanner.images = carBanner.images.filter(img => img !== imageToDelete);
 
     await carBanner.save();
